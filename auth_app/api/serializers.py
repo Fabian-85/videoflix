@@ -57,8 +57,8 @@ class CustomLoginSerializer(TokenObtainPairSerializer):
         try:
             user = User.objects.get(email=email)
         except  User.DoesNotExist:
-            raise serializers.ValidationError("Invalid email or password")
+            raise serializers.ValidationError("No active account found with the given credentials")
         if not user.check_password(password):
-             raise serializers.ValidationError("Invalid email or password")
+             raise serializers.ValidationError("No active account found with the given credentials")
         data = super().validate({"username": user.username, "password":password})
         return data
