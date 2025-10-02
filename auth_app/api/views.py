@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .serializers import RegistrationSerializer
+from .serializers import RegistrationSerializer, CustomLoginSerializer
 from .tokens import account_activation_token
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -59,15 +59,19 @@ class ActivateAccountView(APIView):
 
 
 class LoginView(TokenObtainPairView):
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        refresh = response.data.get("refresh")
-        access = response.data.get("access")
 
+    serializer_class = CustomLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        refresh = serializer.validated_data["refresh"] 
+        access = serializer.validated_data["access"]
+        
+        response = Response({"message":"Login erfolgreich"})
         response.set_cookie("refresh_token", value=refresh,httponly=True,secure=True,samesite="Lax")
         response.set_cookie("access_token", value=access,httponly=True,secure=True,samesite="Lax")
-
-        response.data = {"message":"Login erfolgreich"}
         return response
 
 class RefreshTokenView(TokenRefreshView):
