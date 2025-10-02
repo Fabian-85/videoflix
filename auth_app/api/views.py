@@ -8,7 +8,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-
+from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView)
 
 User = get_user_model()
 
@@ -58,10 +58,31 @@ class ActivateAccountView(APIView):
             return Response({"message": "User Account is active"})
 
 
-class TestView(APIView):
+class LoginView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        refresh = response.data.get("refresh")
+        access = response.data.get("access")
 
-    permission_classes = [IsAuthenticated]
+        response.set_cookie("refresh_token", value=refresh,httponly=True,secure=True,samesite="Lax")
+        response.set_cookie("access_token", value=access,httponly=True,secure=True,samesite="Lax")
 
-    def get(self, request):
-        content = {'message': 'This is a Token test view!'}
-        return Response(content)
+        response.data = {"message":"Login erfolgreich"}
+        return response
+
+class RefreshTokenView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if refresh_token is None:
+            return Response({"detail":""}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data={"refresh":refresh_token})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except:
+            return Response({"detail":"Refresh Token is invalid!"}, status=status.HTTP_401_UNAUTHORIZED)
+        access_token = serializer.validated_data.get("access")
+        response = Response({"message":"Access Token is refreshed!"}, status=status.HTTP_200_OK)
+        response.set_cookie("access_token", value=access_token,httponly=True,secure=True,samesite="Lax")
+        return response
