@@ -29,7 +29,7 @@ class RegistrationView(APIView):
                 'user': {
                     'user_id': saved_account.pk,
                     'email': saved_account.email,
-                    'uidb64':activate_url
+                    'url':activate_url
                 },
                 'token':token
             }
@@ -40,7 +40,7 @@ class RegistrationView(APIView):
 
 
 class ActivateAccountView(APIView):
-    dpermission_classes=[AllowAny]
+    permission_classes=[AllowAny]
 
     def get(self, request, uidb64, token):
         try:
