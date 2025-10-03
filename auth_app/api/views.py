@@ -2,7 +2,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .serializers import RegistrationSerializer, CustomLoginSerializer
+from django.contrib.auth.tokens import default_token_generator
+from .serializers import RegistrationSerializer, CustomLoginSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from .tokens import account_activation_token
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -10,6 +11,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView)
 from rest_framework_simplejwt.tokens import RefreshToken
+from .signals_def import password_reset_requested
 
 User = get_user_model()
 
@@ -113,5 +115,40 @@ class LogoutView(APIView):
         response.delete_cookie('access_token')
         return response
     
+class SendResetPasswordRequestView(APIView):
 
- 
+    permission_classes = [AllowAny]
+
+    def post(self,request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+        print(email)
+        user = User.objects.filter(email=email).first()
+        if user and user.email:
+            password_reset_requested.send(sender=self.__class__, user=user, request=request)
+        return Response({"detail": "If account exists, then the email will be sent."}, status=status.HTTP_200_OK)
+        
+
+class PasswordResetConfirmView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self,request,uidb64, token):
+        try:
+         uid = force_str(urlsafe_base64_decode(uidb64))
+         user = User.objects.get(pk=uid)
+        except:
+            return Response({"message": "invalid Token or user id"},status=status.HTTP_400_BAD_REQUEST)
+        is_token_valid = default_token_generator.check_token(user, token)
+        if is_token_valid:
+             serializer = PasswordResetConfirmSerializer(data=request.data)
+             serializer.is_valid(raise_exception=True)
+             new_password = serializer.validated_data["new_password"]
+
+             user.set_password(new_password)
+             user.save(update_fields=["password"])
+
+             return Response({"detail": "Your Password has been succesfully reset."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "invalid Token or user id"})

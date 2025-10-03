@@ -62,3 +62,22 @@ class CustomLoginSerializer(TokenObtainPairSerializer):
              raise serializers.ValidationError("No active account found with the given credentials")
         data = super().validate({"username": user.username, "password":password})
         return data
+    
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        pw1 = attrs.get("new_password")
+        pw2 = attrs.get("confirm_password")
+        print(pw1)
+        print(pw2)
+        if pw1 != pw2:
+            raise serializers.ValidationError({"message": "passwords don't match!"})
+        return attrs

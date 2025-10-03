@@ -6,4 +6,5 @@ class AuthAppConfig(AppConfig):
     name = 'auth_app'
 
     def ready(self):
+        from .api import signals_def
         from .api import signals
