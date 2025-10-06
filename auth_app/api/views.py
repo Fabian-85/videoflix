@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView)
 from rest_framework_simplejwt.tokens import RefreshToken
-from .signals_def import password_reset_requested
+from .signals_def import password_reset_requested, email_verification_requested
 
 User = get_user_model()
 
@@ -36,7 +36,7 @@ class RegistrationView(APIView):
                 },
                 'token':token
             }
-
+            email_verification_requested.send(sender=self.__class__,user_uidb64=uidb64 ,path=activate_url ,email=saved_account.email,token=token)
             return Response(data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -55,7 +55,6 @@ class ActivateAccountView(APIView):
         if is_token_valid:
             user.is_active = True
             user.save()
-            print("True")
             return Response({"message": "Account successfully activated"})
         else:
             return Response({"message": "User Account is active"})
