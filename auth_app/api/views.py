@@ -1,14 +1,14 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from django.contrib.auth.tokens import default_token_generator
-from .serializers import RegistrationSerializer, CustomLoginSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from .tokens import account_activation_token
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.urls import reverse
-from django.contrib.auth import get_user_model
+from .serializers import RegistrationSerializer, CustomLoginSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView)
 from rest_framework_simplejwt.tokens import RefreshToken
 from .signals_def import password_reset_requested, email_verification_requested
@@ -24,19 +24,15 @@ class RegistrationView(APIView):
         data = {}
         if serializer.is_valid():
             saved_account = serializer.save()
-            uidb64 = urlsafe_base64_encode(force_bytes(saved_account.pk))
             token = account_activation_token.make_token(saved_account)
-            activate_path = reverse("activate_account", kwargs={"uidb64": uidb64, "token": token})
-            activate_url = request.build_absolute_uri(activate_path)
             data = {
                 'user': {
                     'user_id': saved_account.pk,
                     'email': saved_account.email,
-                    'url':activate_url
                 },
                 'token':token
             }
-            email_verification_requested.send(sender=self.__class__,user_uidb64=uidb64 ,path=activate_url ,email=saved_account.email,token=token)
+            email_verification_requested.send(sender=self.__class__,user=saved_account ,email=saved_account.email,token=token, request=request)
             return Response(data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -55,9 +51,9 @@ class ActivateAccountView(APIView):
         if is_token_valid:
             user.is_active = True
             user.save()
-            return Response({"message": "Account successfully activated"})
+            return Response({"message": "Account successfully activated"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "User Account is active"})
+            return Response({"message": "Token is inactive or user does not match with this token"},status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(TokenObtainPairView):
@@ -71,7 +67,7 @@ class LoginView(TokenObtainPairView):
         refresh = serializer.validated_data["refresh"] 
         access = serializer.validated_data["access"]
         
-        response = Response({"detail":"Login successful","user":{"id":serializer.user.id,"username":serializer.user.username}})
+        response = Response({"detail":"Login successful","user":{"id":serializer.user.id,"username":serializer.user.username}},status=status.HTTP_200_OK)
         response.set_cookie("refresh_token", value=refresh,httponly=True,secure=True,samesite="Lax")
         response.set_cookie("access_token", value=access,httponly=True,secure=True,samesite="Lax")
         return response
