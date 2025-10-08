@@ -1,8 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.urls import reverse
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -16,6 +15,19 @@ from .signals_def import password_reset_requested, email_verification_requested
 User = get_user_model()
 
 class RegistrationView(APIView):
+
+    """
+    View for user registration.    
+
+    Permissions:
+        AllowAny: Anyone can register.
+
+    POST:
+        Receives: JSON with 'email', 'password'
+        email must be unique.
+        Creates a new user and returns a success message or error details.
+        Send an activation email to activate the currently inactive user.
+    """
 
     permission_classes = [AllowAny]
 
@@ -39,6 +51,20 @@ class RegistrationView(APIView):
 
 
 class ActivateAccountView(APIView):
+
+    """
+    View to activate a user account via token.
+
+    Permissions:
+        AllowAny: Anyone with a valid link can activate.
+
+    GET:
+        Path params: 'uidb64', 'token'
+        Validates the token for the given user.
+        On success: sets 'is_active=True' and returns 200.
+        On failure: returns 400 with an error message.
+    """
+
     permission_classes=[AllowAny]
 
     def get(self, request, uidb64, token):
@@ -58,6 +84,17 @@ class ActivateAccountView(APIView):
 
 class LoginView(TokenObtainPairView):
 
+    """
+    View for user login.
+
+    Permissions:
+        AllowAny: Anyone can attempt to log in.
+
+    POST:
+        Receives: JSON with 'username' and 'password'.
+        Returns: Sets 'access' and 'refresh' tokens in HttpOnly cookies and returns user details on successful authentication.
+    """
+
     serializer_class = CustomLoginSerializer
 
     def post(self, request, *args, **kwargs):
@@ -73,6 +110,19 @@ class LoginView(TokenObtainPairView):
         return response
 
 class RefreshTokenView(TokenRefreshView):
+
+    """
+    View for refreshing JWT access tokens.
+
+    Permissions:
+        AllowAny: Anyone can attempt to refresh the token.
+
+    POST:
+        Receives: No body required, uses 'refresh_token' from HttpOnly cookie.
+        Returns: Sets a new 'access' token in an HttpOnly cookie and returns a success message.
+
+    """
+
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get("refresh_token")
 
@@ -91,6 +141,18 @@ class RefreshTokenView(TokenRefreshView):
     
 
 class LogoutView(APIView):
+
+    """
+    View for user logout.
+    
+    Permissions:
+        IsAuthenticated: Only authenticated users can log out.
+
+    POST:
+        Receives: No body required, uses token from HttpOnly cookie.
+        Returns: Blacklists the refresh token, deletes 'access' and 'refresh' cookies, and returns a success message.
+    
+    """
     
     permission_classes = [IsAuthenticated]
 
@@ -112,6 +174,18 @@ class LogoutView(APIView):
     
 class SendResetPasswordRequestView(APIView):
 
+    """
+    View to start the password reset flow.
+
+    Permissions:
+        AllowAny: Anyone can request a reset with an email address.
+
+    POST:
+        Receives: JSON with 'email'.
+        If a matching user exists, emits a signal to send a reset email asynchronously.
+        Always returns a generic 200 response to avoid account enumeration.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self,request):
@@ -126,6 +200,20 @@ class SendResetPasswordRequestView(APIView):
         
 
 class PasswordResetConfirmView(APIView):
+
+    """
+    View to set a new password using uid/token.
+
+    Permissions:
+        AllowAny: Anyone with a valid link can complete the reset.
+
+    POST:
+        Path params: 'uidb64', 'token'.
+        Receives: JSON with 'new_password', 'confirm_password'.
+        Validates the reset token and matching passwords, then updates the user's password.
+        On success: returns 200 with a success message.
+        On failure: returns 400 with an error message.
+    """
 
     permission_classes = [AllowAny]
 

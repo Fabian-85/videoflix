@@ -6,6 +6,15 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 User = get_user_model()
 
 class RegistrationSerializer(serializers.ModelSerializer):
+
+    """
+    Serializer for registering a new user.
+
+    Validates that the email is unique (case-sensitive) and saves the user as a inactive user with a hashed password,
+    if password and confirmed_password are the same. The user is inactive.
+    username is equal to email.
+    """
+
     confirmed_password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -27,13 +36,13 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
+        email = value.strip().lower() 
+        if User.objects.filter(email=email).exists():
             raise serializers.ValidationError('Email already exists')
-        return value
+        return email
 
     def save(self):
         pw = self.validated_data['password']
-
         account = User(email=self.validated_data['email'], username=self.validated_data['email'], is_active=False)
         account.set_password(pw)
         account.save()
@@ -41,6 +50,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
     
 
 class CustomLoginSerializer(TokenObtainPairSerializer):
+
+    """
+    Custom Login Serializer with email and password
+    """
     
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -51,7 +64,7 @@ class CustomLoginSerializer(TokenObtainPairSerializer):
             self.fields.pop("username")
     
     def validate(self, attrs):
-        email = attrs.get("email")
+        email = attrs.get("email").strip().lower()
         password = attrs.get("password")
 
         try:
@@ -65,10 +78,27 @@ class CustomLoginSerializer(TokenObtainPairSerializer):
     
 
 class PasswordResetRequestSerializer(serializers.Serializer):
+    
+    """
+    Serializer for validate email adress (case-sensitive).
+    """
+
     email = serializers.EmailField()
+
+    def validate_email(self, value):
+        email = value.strip().lower() 
+        return email
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
+
+    """
+    Validates two matching new passwords in the reset confirmation step.
+
+    Fields:
+        new_password (write_only)
+        confirm_password (write_only)
+    """
 
     new_password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)

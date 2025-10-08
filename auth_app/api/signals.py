@@ -10,10 +10,21 @@ from django.contrib.auth.tokens import default_token_generator
 import django_rq
 from .signals_def import password_reset_requested, email_verification_requested
 
+
 User = get_user_model()
 
-
 def send_activation_email_task(username, confirmation_url, to_email):
+
+    """
+    Send activation email for activate a user account.
+
+     Args:
+        username: greeting name.
+        confirmation_url: frontend link with uid+token to activate a user account.
+        to_email: EN recipient.
+
+    """
+
     subject = "Activate your Videoflix account"
     ctx = {"username": username, "activation_link": confirmation_url,
            "logo_url": getattr(settings, "EMAIL_LOGO_URL", None)}
@@ -27,6 +38,12 @@ def send_activation_email_task(username, confirmation_url, to_email):
 
 @receiver(email_verification_requested)
 def handle_email_verification_requested(sender, user, email, token, request, **kwargs):
+
+    """
+    On email verification signal, build uidb64, create a url for activate a user account
+    and enqueue verification email task.
+    """
+
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     activate_path = reverse("activate_account", kwargs={
                             "uidb64": uidb64, "token": token})
@@ -37,6 +54,15 @@ def handle_email_verification_requested(sender, user, email, token, request, **k
 
 
 def send_reset_password_mail(confirmation_url, to_email):
+
+    """
+    Send password reset email for change the password. 
+   
+    Args:
+        confirmation_url: frontend link with uid+token to change the password.
+        to_email: EN recipient.
+
+    """
     subject="Reset your Videoflix account"
     ctx = { "reset_link": confirmation_url,
            "logo_url": getattr(settings, "EMAIL_LOGO_URL", None)}
@@ -50,6 +76,12 @@ def send_reset_password_mail(confirmation_url, to_email):
 
 @receiver(password_reset_requested)
 def handle_password_reset_requested(sender, request, user, **kwargs):
+
+    """
+    On password reset signal, build uidb64 + token, create a url for change the password
+    and enqueue reset email task.
+    """
+
     token = default_token_generator.make_token(user)
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     activate_path = reverse("password_confirm", kwargs={
