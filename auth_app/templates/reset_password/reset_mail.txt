@@ -1,0 +1,13 @@
+Hello,
+
+We recently received a request to reset your password. If you made this request, please click on the following link to reset your password:  
+
+{{ reset_link }}
+
+Please note that for security reasons, this link is on only valid for 3 hours. 
+
+If you did not request a password reset, please ignor this email. 
+
+
+Best regards, 
+Your Videoflix team!
