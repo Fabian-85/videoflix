@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     'django_rq',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
-    'auth_app.apps.AuthAppConfig'
+    'auth_app.apps.AuthAppConfig',
+    'content'
 ]
 
 MIDDLEWARE = [
