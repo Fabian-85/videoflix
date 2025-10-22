@@ -14,4 +14,10 @@ class Video(models.Model):
     category = models.CharField(choices=VIDEO_CATEGORY_CHOICES)
     thumbnail_url = models.FileField(upload_to='thumbnails/')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    video_file = models.FileField(upload_to='videos/', null=True)
+
+    hls_480p = models.FileField(upload_to='hls/',  null=True, blank=True,editable=False)
+    hls_720p = models.FileField(upload_to='hls/',  null=True, blank=True,editable=False)
+    hls_1080p = models.FileField(upload_to='hls/',  null=True, blank=True,editable=False)
     
