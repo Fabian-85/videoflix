@@ -12,12 +12,25 @@ from .serializers import VideoSerializer
 
 class VideosView(generics.ListAPIView):
 
+    """
+    API view to retrieve list of Videos
+    """
+
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
     permission_classes=[AllowAny]
 
 
 class HSLView(APIView):
+
+    """
+    API view to retrieve HLS playlist for a video at a specific resolution
+
+    - GET:
+        Retrieves the HLS playlist (.m3u8) for the specified video and resolution.
+        resolution can only be one of '480p', '720p', '1080p'.
+        Permission: Only authenticated users can access.
+    """
     
     permission_classes=[IsAuthenticated]
 
@@ -41,6 +54,16 @@ class HSLView(APIView):
         return resp
 
 class SegmentView(APIView):
+
+    """
+    API view to retrieve HLS segment from a video at a specific resolution
+
+    - GET:
+        Retrieves the HLS segment (.ts) from the specified video, resolution, and segment name.
+        resolution can only be one of '480p', '720p', '1080p'.
+        segment (str): Segment file name (e.g., 'seg_001.ts').
+        Permission: Only authenticated users can access.
+    """
 
     permission_classes=[IsAuthenticated]
 

@@ -7,6 +7,11 @@ from content.api.functions import build_hls_variant, delete_file_if_exists, dele
 
 @receiver(post_save, sender=Video)
 def enqueue_hls_jobs_on_create(sender, instance, created, **kwargs):
+
+    """
+    Enqueue HLS variant in 480p, 720p and 1080p building jobs when a new Video is created.
+    """
+
     if created:
         print("created")
         queue = django_rq.get_queue('default', autocommit=True)
@@ -16,8 +21,16 @@ def enqueue_hls_jobs_on_create(sender, instance, created, **kwargs):
     else:
         print("updated")
 
+
 @receiver(pre_save, sender=Video)
-def enqueue_hls_jobs(sender, instance, **kwargs): 
+def enqueue_hls_jobs_and_delete_old_files_on_update(sender, instance, **kwargs): 
+
+    """
+    Enqueue HLS variant in 480p, 720p and 1080p building jobs when a Video's video_file is updated.
+    Delete old video and HLS files if they are replaced.
+    Also delete old thumbnail if it is replaced.
+    """
+
     is_create = instance._state.adding
     if instance.pk and not is_create:
         old_instance = Video.objects.get(pk=instance.pk)
@@ -34,6 +47,11 @@ def enqueue_hls_jobs(sender, instance, **kwargs):
             
 @receiver(post_delete, sender=Video)
 def cleanup_video_files_on_delete(sender, instance, **kwargs):
+
+    """
+    Clean up video files and HLS directories when a Video is deleted.
+    """
+    
     delete_file_if_exists(instance.thumbnail_url)
     delete_file_if_exists(instance.video_file)
     delete_hls_directory_for_video(instance.id)
