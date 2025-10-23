@@ -31,8 +31,8 @@ def enqueue_hls_jobs_and_delete_old_files_on_update(sender, instance, **kwargs):
     Also delete old thumbnail if it is replaced.
     """
 
-    is_create = instance._state.adding
-    if instance.pk and not is_create:
+    print("pre_save signal triggered")
+    if instance.pk:
         old_instance = Video.objects.get(pk=instance.pk)
         if old_instance.video_file != instance.video_file:
             delete_file_if_exists(old_instance.video_file)
