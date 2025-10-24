@@ -4,12 +4,25 @@ Videoflix is a video streaming plattform.
 
 ## Features
 - User authentication with JWT Token
+- Email-based account activation
+- Password reset via email with secure token
+- Video transcoding to multiple resolutions (480p, 720p, 1080p)
+- Generation of HLS (M3U8 + segments) per resolution
+- Automatic deletion of old source files, thumbnails, and HLS folders during updates/deletions
 
 
 ## Technology Stack
-- Django, Django REST Framework
-- Authentication JWT (JSON Web Token) and HTTP-Only-COOKIES
+- Language: Python
+- Framework: Django, Django REST Framework
+- Auth: djangorestframework-simplejwt (JWT) mit HttpOnly Cookies
 - Database: PostgreSQL
+- Background Jobs: Redis + RQ (django-rq)
+- Video Processing: FFmpeg (Transcoding & HLS)
+- Static Files: WhiteNoise
+- Containerization: Docker (Compose)
+- Deployment: Gunicorn
+- Testing: pytest, coverage.py
+- Config: python-dotenv (.env)
 
 
 ## Backend-Setup Introduction
@@ -30,9 +43,10 @@ git clone https://github.com/Fabian-85/videoflix.git
 cd videoflix
 ```
 
-2. **Start the backend server (Docker must be open)**
+2. **Configure .env**
 ```bash
-docker-compose up --build
+cp .env.template .env # edit the .env file
+# in windows: copy .env.template .env
 ```
 
 3. **Start the backend server (Docker must be open)**
@@ -64,7 +78,7 @@ docker-compose up --build
   </details>
 
   <details>
-  <summary><strong>GET</strong> <code>/api/activate/<uidb64>/<token>/</code></summary>
+  <summary><strong>GET</strong> <code>/api/activate/&lt;uidb64&gt;/&lt;token&gt;/</code></summary>
 
   **Description:**
   Activates the user account using the token sent by email. 
@@ -134,7 +148,7 @@ docker-compose up --build
   </details>
 
  <details>
-  <summary><strong>POST</strong> <code>/api/password_confirm/<uidb64>/<token>/</code></summary>
+  <summary><strong>POST</strong> <code>/api/password_confirm/&lt;uidb64&gt;/&lt;token&gt;/</code></summary>
 
   **Description:**
   Confirm the password change with the token included in the email.
@@ -150,8 +164,6 @@ docker-compose up --build
   </details>
  
 
-
- 
 ### Video Management
 
 <details>
@@ -168,7 +180,7 @@ docker-compose up --build
 </details>
 
 <details>
-  <summary><strong>GET</strong> <code>/api/video/<int:movie_id>/<str:resolution>/index.m3u8</code></summary>
+  <summary><strong>GET</strong> <code>/api/video/&lt;int:movie_id&gt;/&lt;str:resolution&gt;/index.m3u8</code></summary>
 
   **Description:**
    Returns the HLS master playlist for a specific movie and selected resolution.
@@ -181,7 +193,7 @@ docker-compose up --build
 </details>
  
 <details>
-  <summary><strong>GET</strong> <code>/api/video/<int:movie_id>/<str:resolution>/index.m3u8</code></summary>
+  <summary><strong>GET</strong> <code>/api/video/&lt;int:movie_id&gt;/&lt;str:resolution&gt;/&lt;str:segment&gt;/</code></summary>
 
   **Description:**
   Returns a single HLS video segment for a specific movie in the selected resolution.
