@@ -1,6 +1,6 @@
 # Videoflix Backend Project
 
-Videoflix is a video streaming plattform.
+Videoflix is a Django/DRF-Backend application for streaming video inspired by Netflix. Uploaded videos are automatically transcoded to 480p/720p/1080p and delivered as HLS (M3U8 + segments). Authentication uses JWT stored in HttpOnly cookies, and heavy work runs asynchronously via Redis/RQ.
 
 ## Features
 - User authentication with JWT Token
