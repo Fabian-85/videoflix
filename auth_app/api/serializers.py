@@ -106,8 +106,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     def validate(self, attrs):
         pw1 = attrs.get("new_password")
         pw2 = attrs.get("confirm_password")
-        print(pw1)
-        print(pw2)
         if pw1 != pw2:
             raise serializers.ValidationError({"message": "passwords don't match!"})
         return attrs

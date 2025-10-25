@@ -135,7 +135,7 @@ class RefreshTokenView(TokenRefreshView):
         except:
             return Response({"detail":"Refresh Token is invalid!"}, status=status.HTTP_401_UNAUTHORIZED)
         access_token = serializer.validated_data.get("access")
-        response = Response({"detail":"Token refreshed","acess":access_token}, status=status.HTTP_200_OK)
+        response = Response({"detail":"Token refreshed","access":access_token}, status=status.HTTP_200_OK)
         response.set_cookie("access_token", value=access_token,httponly=True,secure=True,samesite="Lax")
         return response
     
@@ -192,7 +192,6 @@ class SendResetPasswordRequestView(APIView):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data["email"]
-        print(email)
         user = User.objects.filter(email=email).first()
         if user and user.email:
             password_reset_requested.send(sender=self.__class__, user=user, request=request)
@@ -234,4 +233,4 @@ class PasswordResetConfirmView(APIView):
 
              return Response({"detail": "Your Password has been succesfully reset."}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "invalid Token or user id"})
+            return Response({"message": "invalid Token or user id"},status=status.HTTP_400_BAD_REQUEST)
