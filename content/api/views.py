@@ -14,11 +14,12 @@ class VideosView(generics.ListAPIView):
 
     """
     API view to retrieve list of Videos
+    Permission: Only authenticated users can access.
     """
 
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    permission_classes=[AllowAny]
+    permission_classes=[IsAuthenticated]
 
 
 class HSLView(APIView):
