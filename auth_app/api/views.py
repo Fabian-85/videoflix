@@ -210,8 +210,8 @@ class PasswordResetConfirmView(APIView):
         Path params: 'uidb64', 'token'.
         Receives: JSON with 'new_password', 'confirm_password'.
         Validates the reset token and matching passwords, then updates the user's password.
-        On success: returns 200 with a success message.
-        On failure: returns 400 with an error message.
+        On success: returns 200.
+        On failure: returns 200.
     """
 
     permission_classes = [AllowAny]
@@ -221,7 +221,7 @@ class PasswordResetConfirmView(APIView):
          uid = force_str(urlsafe_base64_decode(uidb64))
          user = User.objects.get(pk=uid)
         except:
-            return Response({"message": "invalid Token or user id"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "invalid Token or user id"},status=status.HTTP_200_OK)
         is_token_valid = default_token_generator.check_token(user, token)
         if is_token_valid:
              serializer = PasswordResetConfirmSerializer(data=request.data)
@@ -233,4 +233,4 @@ class PasswordResetConfirmView(APIView):
 
              return Response({"detail": "Your Password has been succesfully reset."}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "invalid Token or user id"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "invalid Token or user id"},status=status.HTTP_200_OK)
