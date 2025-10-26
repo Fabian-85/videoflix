@@ -60,15 +60,15 @@ class DummyQueue:
         if self.execute_now:
             fn(*args, **kwargs)
 
-@pytest.fixture
+@pytest.fixture()
 def rq_queue(monkeypatch):
     from content.api import signals 
     dummy = DummyQueue(execute_now=True)
     monkeypatch.setattr(signals.django_rq, "get_queue", lambda *a, **k: dummy)
     return dummy
 
-@pytest.fixture
-def create_test_videos(rq_queue, django_db_blocker):
+@pytest.fixture()
+def create_test_video(rq_queue, django_db_blocker):
     with django_db_blocker.unblock():   
      assets = Path(__file__).resolve().parent / "test_files"
      video_src = assets / "videos" / "video_1.mp4"
@@ -82,12 +82,12 @@ def create_test_videos(rq_queue, django_db_blocker):
             video_file=File(vf, name="video1.mp4"),
             thumbnail_url=File(tf, name="thumbnail1.jpg"),
         )
-        v2 = Video.objects.create(
-            title="Second Video",
-            description="description",
-            video_file=File(vf, name="video1.mp4"),
-            thumbnail_url=File(tf, name="thumbnail2.jpg"),
-        )
         v1.refresh_from_db()
-        v2.refresh_from_db()
-        return v1, v2
+        return v1.pk
+     
+@pytest.fixture
+def get_video(create_test_video,django_db_blocker):
+    with django_db_blocker.unblock(): 
+        pk = create_test_video
+        return Video.objects.get(pk=pk)
+           
