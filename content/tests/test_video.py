@@ -28,13 +28,13 @@ def test_video_list_api_unauthenticated(api_client, get_video):
     url = reverse("video-list")
     response = api_client.get(url)
     assert response.status_code == 401
-    
+
 
 @pytest.mark.django_db
 def test_hsl_playlist_api(api_client, get_video, active_user):
     api_client.force_authenticate(user=active_user)
     video = get_video
-    url = reverse("hsl-playlist", args=[video.pk, "720p"])
+    url = reverse("hsl-playlist", kwargs={"pk": video.pk, "resolution": "720p"})
     response = api_client.get(url)
     assert response.status_code == 200
     assert "#EXTM3U" in response.text
@@ -45,7 +45,7 @@ def test_hsl_playlist_api(api_client, get_video, active_user):
 def test_hsl_playlist_api_unsupported_resolution(api_client, get_video, active_user):
     api_client.force_authenticate(user=active_user)
     video = get_video
-    url = reverse("hsl-playlist", args=[video.pk, "930p"])
+    url = reverse("hsl-playlist",  kwargs={"pk": video.pk, "resolution": "930p"})
     response = api_client.get(url)
     assert response.status_code == 404
 
@@ -53,7 +53,7 @@ def test_hsl_playlist_api_unsupported_resolution(api_client, get_video, active_u
 @pytest.mark.django_db
 def test_hsl_playlist_api_video_not_found(api_client, active_user):
     api_client.force_authenticate(user=active_user)
-    url = reverse("hsl-playlist", args=[9999, "930p"])
+    url = reverse("hsl-playlist",  kwargs={"pk": 9999, "resolution": "720p"})
     response = api_client.get(url)
     assert response.status_code == 404
 
@@ -61,7 +61,7 @@ def test_hsl_playlist_api_video_not_found(api_client, active_user):
 @pytest.mark.django_db
 def test_hsl_playlist_api_unauthenticated(api_client, get_video, active_user):
     video = get_video
-    url = reverse("hsl-playlist", args=[video.pk, "720p"])
+    url = reverse("hsl-playlist",  kwargs={"pk": video.pk, "resolution": "720p"})
     response = api_client.get(url)
     assert response.status_code == 401
 
@@ -70,7 +70,7 @@ def test_hsl_playlist_api_unauthenticated(api_client, get_video, active_user):
 def test_hsl_segment_api(api_client, get_video, active_user):
     api_client.force_authenticate(user=active_user)
     video = get_video
-    url = reverse("hsl-segment", args=[video.pk, "720p", "seg_000.ts"])
+    url = reverse("hsl-segment", kwargs={"pk": video.pk, "resolution": "720p", "segment": "seg_000.ts"})
     response = api_client.get(url)
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "video/MP2T"
@@ -79,7 +79,7 @@ def test_hsl_segment_api(api_client, get_video, active_user):
 @pytest.mark.django_db
 def test_hsl_segment_api_unauthenticated(api_client, get_video, active_user):
     video = get_video
-    url = reverse("hsl-segment", args=[video.pk, "720p", "seg_000.ts"])
+    url = reverse("hsl-segment",  kwargs={"pk": video.pk, "resolution": "720p", "segment": "seg_000.ts"})
     response = api_client.get(url)
     assert response.status_code == 401
 
@@ -88,7 +88,7 @@ def test_hsl_segment_api_unauthenticated(api_client, get_video, active_user):
 def test_hsl_segment_api_unsupported_resolution(api_client, get_video, active_user):
     api_client.force_authenticate(user=active_user)
     video = get_video
-    url = reverse("hsl-segment", args=[video.pk, "920p", "seg_000.ts"])
+    url = reverse("hsl-segment",  kwargs={"pk": video.pk, "resolution": "920p", "segment": "seg_000.ts"})
     response = api_client.get(url)
     assert response.status_code == 404
 
@@ -96,7 +96,7 @@ def test_hsl_segment_api_unsupported_resolution(api_client, get_video, active_us
 @pytest.mark.django_db
 def test_hsl_segment_api_video_not_found(api_client, active_user):
     api_client.force_authenticate(user=active_user)
-    url = reverse("hsl-segment", args=[9999, "920p", "seg_000.ts"])
+    url = reverse("hsl-segment",  kwargs={"pk": 9999, "resolution": "720p", "segment": "seg_000.ts"})
     response = api_client.get(url)
     assert response.status_code == 404
 
@@ -105,7 +105,7 @@ def test_hsl_segment_api_video_not_found(api_client, active_user):
 def test_hsl_segment_api_segment_not_found(api_client, get_video, active_user):
     api_client.force_authenticate(user=active_user)
     video = get_video
-    url = reverse("hsl-segment", args=[video.pk, "720p", "missing.ts"])
+    url = reverse("hsl-segment",  kwargs={"pk": video.pk, "resolution": "720p", "segment": "missing.ts"})
     response = api_client.get(url)
     assert response.status_code == 404
     
