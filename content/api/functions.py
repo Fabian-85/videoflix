@@ -19,8 +19,6 @@ def convert_to_hdx(source, target, resolution):
         resolution (str): Target resolution (e.g., 'hd480', 'hd720', 'hd1080').
     """
 
-    out_dir = os.path.dirname(target)
-    os.makedirs(out_dir, exist_ok=True)
     cmd = f'ffmpeg -i "{source}" -s {resolution} -c:v libx264 -crf 23 -c:a aac -strict -2 "{target}"'
     run = subprocess.run(cmd, capture_output=True, shell=True)
 
@@ -57,12 +55,13 @@ def build_hls_variant(video_id, resolution):
     src_path = video.video_file.path
     basename = Path(src_path).stem
 
-    out = os.path.join(settings.MEDIA_ROOT, 'tmp', f'video_{video_id}', f"{basename}_{resolution}p.mp4")
-    convert_to_hdx(src_path, out, f"hd{resolution}")
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, f"{basename}_{resolution}p.mp4")
+        convert_to_hdx(src_path, out, f"hd{resolution}")
         
-    hls_dir = os.path.join(settings.MEDIA_ROOT, 'hls',
+        hls_dir = os.path.join(settings.MEDIA_ROOT, 'hls',
                                f'video_{video.id}', f'{resolution}p', f"{basename}_{resolution}p.m3u8")
-    build_hls_playlist(out, hls_dir)
+        build_hls_playlist(out, hls_dir)
 
     rel = os.path.relpath(hls_dir, settings.MEDIA_ROOT)
     field_name = f'hls_{resolution}p'
