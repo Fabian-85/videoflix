@@ -25,6 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        docker-compose up --build
     - name: Run Tests
       run: |
-        python manage.py pytest
+        docker-compose exec web python manage.py pytest
