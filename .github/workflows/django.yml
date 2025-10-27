@@ -23,7 +23,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Dependencies
       run: |
-        sudo aot install docker.io
+        sudo apt install docker.io
         docker-compose up --build
     - name: Run Tests
       run: |
