@@ -23,9 +23,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        sudo aot install docker.io
         docker-compose up --build
     - name: Run Tests
       run: |
-        docker-compose exec web python manage.py pytest
+        docker-compose exec web pytest
